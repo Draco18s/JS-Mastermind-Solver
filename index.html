@@ -1,77 +1,159 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
 <head>
-  <meta charset='utf-8'>
+<title>Mastermind Solver</title>
+<style type="text/css">
+input {
+	width: 3em;
+}
+</style>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<script type="text/javascript">
+$(function() {
+	var DATA_KEY = 'nebu-mastermind-solver';
+	var $guesses = $('#guesses');
+	var $restart = $('#restart');
 
-  <title>NebuPookins/JS-Mastermind-Solver @ GitHub</title>
+	function generateGuess(numCol, numPeg) {
+		var retVal = [];
+		for (var i = 0; i < numPeg; ++i) {
+			retVal.push(Math.floor(Math.random() * numCol));
+		}
+		return retVal;
+	}
 
-  <style type="text/css">
-    body {
-      margin-top: 1.0em;
-      background-color: #942448;
-      font-family: Helvetica, Arial, FreeSans, san-serif;
-      color: #ffffff;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-    h1 { font-size: 3.8em; color: #6bdbb7; margin-bottom: 3px; }
-    h1 .small { font-size: 0.4em; }
-    h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #6bdbb7; }
-    h3 { text-align: center; color: #6bdbb7; }
-    a { color: #6bdbb7; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-    pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-  </style>
+	/**
+	 * Given an array and an element, returns true if the array contains the element,
+	 * false otherwise.
+	 */
+	function contains(arr, el) {
+		var length = arr.length;
+		var i;
+		for (i = 0; i < length; ++i) {
+			if (arr[i] === el) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Given an answer (an array of integers) and a guess (array of integers),
+	 * returns a judgement (an object with fields "allCorrect" for number of
+	 * exactly correct data, and "colorCorrect" for number of correct colors but
+	 * wrong column.
+	 */
+	function judgeGuess(answer, guess) {
+		var length = answer.length;
+		var i, j;
+		var retVal = {allCorrect: 0, colorCorrect: 0};
+		var skipList = [];
+		for (i = 0; i < length; ++i) {
+			if (answer[i] == guess[i]) {
+				retVal.allCorrect++;
+				skipList.push(i);
+			}
+		}
+		for (i = 0; i < length; ++i) {
+			if (contains(skipList, i)) continue;
+			for (j = 0; j < length; ++j) {
+				if (contains(skipList, j)) continue;
+				if (answer[i] == guess[j]) {
+					retVal.colorCorrect++;
+					break;
+				}
+			}
+		}
+		return retVal;
+	}
+
+	/**
+	 * Returns true if the provided guess (an array of integers) contradicts any
+	 * of the evidence lines (li with jquery data stored). Returns false in all
+	 * other cases, including the case that there are no evidence lines.
+	 */
+	function guessContradicts(guess) {
+		var contradictionFound = false;
+		$guesses.children().each(function(index, evidence) {
+				var $evidence = $(evidence);
+				var evidenceObj = $evidence.data(DATA_KEY);
+				if (evidenceObj && evidenceObj.allCorrect) {
+					/*
+					 * Treat the guess like an answer, and treat the evidence as a guess,
+					 * and see whether the judgement is the same.
+					 */
+					var judgement = judgeGuess(guess, evidenceObj.guess)
+					if ((judgement.allCorrect != evidenceObj.allCorrect) || (judgement.colorCorrect != evidenceObj.colorCorrect)) {
+						contradictionFound = true;
+					}
+				}
+		});
+		console.log('Contradiction found? ' + contradictionFound);
+		return contradictionFound;
+	}
+
+	function updateOldData() {
+		var $exactlyRight = $('.exactlyRight');
+		var $rightColor = $('.rightColor');
+		var $done = $('.done');
+		var $oldGuessLine;
+		var data;
+		$oldGuessLine = $exactlyRight.parents('li');
+		data = $oldGuessLine.data(DATA_KEY);
+		if (data) {
+			data.allCorrect = Math.floor($exactlyRight.val());
+			data.colorCorrect = Math.floor($rightColor.val());
+			$exactlyRight.val(data.allCorrect);
+			$rightColor.val(data.colorCorrect);
+			$oldGuessLine.data(DATA_KEY, data);
+			$exactlyRight.attr('disabled', 'disabled');
+			$rightColor.attr('disabled', 'disabled');
+			$exactlyRight.removeClass('exactlyRight');
+			$rightColor.removeClass('rightColor');
+			$done.remove();
+		}
+	}
+
+
+	function update() {
+		var guess;
+		var $newGuessLine;
+		var $numCol = $('#numCol');
+		var $numPeg = $('#numPeg');
+		updateOldData();
+		guess = generateGuess($numCol.val(), $numPeg.val());
+		console.log('Guessing ' + guess + '?');
+		while (guessContradicts(guess)) {
+			console.log('Try again... Guessing ' + guess + '?');
+			guess = generateGuess($numCol.val(), $numPeg.val());
+		}
+		console.log('Yes, guess is: ' + guess);
+		$newGuessLine = $('<li/>', { text : '' + guess});
+		$newGuessLine.append($(' <span> Right Color & Column: <input class="exactlyRight" type="number"/></span>'));
+		$newGuessLine.append($(' <span> Right Color, Wrong Column: <input class="rightColor" type="number"/></span>'));
+		$newGuessLine.append($('<button class="done">Done</button>'));
+		$newGuessLine.data(DATA_KEY, {guess: guess});
+		$guesses.append($newGuessLine);
+	}
+
+	$restart.click(function() {
+		$guesses.children().remove();
+		update();
+	});
+	$('.done').live('click', update);
+});
+</script>
 </head>
-
 <body>
-  <a href="http://github.com/NebuPookins/JS-Mastermind-Solver"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+<div>
+<div> Number of colors: <input type="number" id="numCol" min="0" step="1" value="4"/></div>
+<div> Number of pegs: <input type="number" id="numPeg" min="0" step="1" value="4"/></div>
+ <button id="restart">(Re)Start</button>
+</div>
 
-  <div id="container">
-
-    <div class="download">
-      <a href="http://github.com/NebuPookins/JS-Mastermind-Solver/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/NebuPookins/JS-Mastermind-Solver/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-    </div>
-
-    <h1><a href="http://github.com/NebuPookins/JS-Mastermind-Solver">JS-Mastermind-Solver</a>
-      <span class="small">by <a href="http://github.com/NebuPookins">NebuPookins</a></span></h1>
-
-    <div class="description">
-      
-    </div>
-
-    <h2>Authors</h2>
-<p>Nebu Pookins (nebu@nebupookins.net)<br/><br/>      </p>
-<h2>Contact</h2>
-<p> (nebu@nebupookins.net)<br/>      </p>
-
-
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="http://github.com/NebuPookins/JS-Mastermind-Solver/zipball/master">zip</a> or
-      <a href="http://github.com/NebuPookins/JS-Mastermind-Solver/tarball/master">tar</a> formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/NebuPookins/JS-Mastermind-Solver</pre>
-    </p>
-
-    <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/NebuPookins/JS-Mastermind-Solver">NebuPookins/JS-Mastermind-Solver</a>
-    </div>
-
-  </div>
-
-  
+<div>
+Note that colors indicated below are 0 based (e.g. if there are 4 colors, they will be "color 0", "color 1", "color 2" and "color 3").
+<ol id="guesses"/>
+</div>
 </body>
 </html>
