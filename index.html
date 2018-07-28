@@ -1,13 +1,13 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Mastermind Solver</title>
+<title>Tachyon Hacking Solver</title>
 <style type="text/css">
 input.number{
 	width: 3em;
 }
 </style>
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 <script type="text/javascript">
 $(function() {
 	var DATA_KEY = 'nebu-mastermind-solver';
@@ -123,15 +123,12 @@ $(function() {
 	function update() {
 		var guess;
 		var $newGuessLine;
-		var $numCol = $('#numCol');
-		var $numPeg = $('#numPeg');
-		var $allowDuplicates = $('#allowDuplicates')
 		updateOldData();
-		guess = generateGuess($numCol.val(), $numPeg.val(), $allowDuplicates.is(':checked'));
+		guess = [0,1,2];//generateGuess(6, 3, false);
 		console.log('Guessing ' + guess + '?');
 		while (guessContradicts(guess)) {
 			console.log('Try again... Guessing ' + guess + '?');
-			guess = generateGuess($numCol.val(), $numPeg.val(), $allowDuplicates.is(':checked'));
+			guess = generateGuess(6, 3, false);
 		}
 		console.log('Yes, guess is: ' + convertGuess(guess));
 		$newGuessLine = $('<li/>', { text : '' + convertGuess(guess)});
@@ -146,12 +143,12 @@ $(function() {
 	 * in the textbox for each guess (an array of integers)
 	 */
 	function convertGuess(guess) {
-		var $colNames=$('#colNames').val();
+		//var $colNames=$('#colNames').val();
 		var colorNames=[];
 		var retVal = [];
 		var i;
 		if($colNames.length>1){
-			colorNames=$colNames.split(",");
+			colorNames=["1","2","3","4","5","6"];//$colNames.split(",");
 		}
 		for(i=0;i<guess.length;i++) {
 			if(colorNames.length>guess[i]) {
@@ -173,14 +170,15 @@ $(function() {
 </script></head>
 <body>
 <div>
-<div><label for="numCol">Number of colors:</label> <input class="number" type="number" id="numCol" min="0" step="1" value="4"/> <label for="colNames">Comma seperated list of color names:</label> <input type="text" id="colNames"></div>
+<h2>Tachyon Hacking Solver</h2>
+<!--<div><label for="numCol">Number of colors:</label> <input class="number" type="number" id="numCol" min="0" step="1" value="4"/> <label for="colNames">Comma seperated list of color names:</label> <input type="text" id="colNames"></div>
 <div><label for="numPeg">Number of pegs:</label> <input class="number" type="number" id="numPeg" min="0" step="1" value="4"/></div>
-<div><input type="checkbox" id="allowDuplicates" checked="checked"></input><label for="allowDuplicates">Allow duplicate colors in a guess:</label></div>
+<div><input type="checkbox" id="allowDuplicates" checked="checked"></input><label for="allowDuplicates">Allow duplicate colors in a guess:</label></div>-->
  <button id="restart">(Re)Start</button>
 </div>
 
 <div>
-Note that any colors with names not specified at the top will be indicated below using their 0 based number (e.g. if there are 4 colors, they will be "0", "1", "2" and "3").
+<!--Note that any colors with names not specified at the top will be indicated below using their 0 based number (e.g. if there are 4 colors, they will be "0", "1", "2" and "3").-->
 <ol id="guesses"/>
 </div>
 </body>
