@@ -1,6 +1,6 @@
-JS-Mastermind-Solver
+Tachyon Hacking Solver
 ====================
 
-Solves the game of "Mastermind".
+Solves the Tachyon hacking minigame.
 
-Online demo at http://nebupookins.github.com/JS-Mastermind-Solver/
+Online demo at https://draco18s.github.io/JS-Mastermind-Solver/
